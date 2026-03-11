@@ -1,0 +1,587 @@
+/* General body styling */
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #ffffff;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  }
+
+.header-title {
+  text-align: center;
+  margin: 20px auto;
+  font-size: 20px; /* responsif font size */
+  color: #0a763e;
+  font-weight: bold;
+  width: 100%;
+  max-width: 1000px; /* biar sejajar dengan #step0 yang juga 400px */
+  padding: 0 15px;  /* jaga jarak di layar kecil */
+  box-sizing: border-box;
+}
+  /* Container for the form */
+  .form-container {
+    background-color: #fff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 20px;
+    width: 350px;
+  }
+  
+  .form-container h2 {
+    font-size: 1.25rem;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .form-container.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .form-container label {
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+    color: #4b5563;
+  }
+  
+  .form-container label input {
+    margin-right: 10px;
+  }
+  
+  .form-container button {
+    background-color: #10b981;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 10px;
+    width: 100%;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  
+  .form-container button:hover {
+    background-color: #0a763e;
+  }
+  
+  /* Step 0: Form Identitas Anak */
+  
+  #step0 {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 400px;
+    margin: 40px auto;
+  }
+  
+  #step0 h1 {
+    font-size: 24px;
+    color: #111827;
+    text-align: center;
+    margin-bottom: 25px;
+  }
+  
+  /* Label dan input */
+  #identityForm label {
+    display: block;
+    margin-bottom: 15px;
+    font-size: 16px;
+    color: #374151;
+  }
+  
+  #identityForm input[type="text"],
+  #identityForm input[type="date"] {
+    width: 92%;
+    padding: 10px 12px;
+    font-size: 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    margin-top: 5px;
+    transition: border-color 0.3s ease;
+  }
+  
+  #identityForm input:focus {
+    outline: none;
+    border-color: #10b981; /* Warna hijau terang */
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  }
+  
+  /* Tombol */
+  #identityForm button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 25px;
+    font-size: 16px;
+    cursor: pointer;
+    margin: 10px 5px 0 0;
+    transition: background-color 0.3s ease;
+  }
+  
+  #identityForm button[type="submit"] {
+    background-color: #10b981;
+    color: white;
+  }
+  
+  #identityForm button[type="submit"]:hover {
+    background-color: #059669;
+  }
+  
+  #identityForm #nextToQuestions {
+    background-color: #3b82f6;
+    color: white;
+  }
+  
+  #identityForm #nextToQuestions:hover {
+    background-color: #2563eb;
+  }
+  
+  /* Identitas tampilan setelah submit */
+  #identity {
+    margin: 30px auto 0;
+    padding: 20px 25px;
+    background-color: #f9f9f9;
+    border-left: 5px solid #10b981;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    font-size: 16px;
+    color: #374151;
+    text-align: left;
+  }
+  
+  /* Hidden class */
+  .hidden {
+    display: none;
+  }
+  
+  /* Content styling */
+  .content {
+    width: 80%;
+    padding: 20px;
+  }
+  
+  /* Radio button group styling */
+  .radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .radio-group label {
+    display: block;
+    cursor: pointer;
+  }
+  
+  .radio-group input[type="radio"] {
+    margin-right: 10px; 
+  }
+  
+  /* Button styling */
+  button {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+  }
+  
+  button:hover {
+    background-color: #218838;
+  }
+  
+  /* Table styling */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    border: 1px solid #ddd;
+    background-color: #fff;
+    border-radius: 5px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  table th,
+  table td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: left;
+  }
+  
+  table th {
+    background-color: #28a745;
+    color: white;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+  
+  table tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  
+  table tr:hover {
+    background-color: #f1f1f1;
+  }
+  
+  /* Hidden class for toggling visibility */
+  .hidden {
+    display: none;
+  }
+  
+  /* Result box styling */
+  .result {
+  display: flex;
+  justify-content: center;
+  padding: 12px 19px;
+  border-radius: 5px;
+  border: 1px solid rgba(221, 221, 221, 0.87);
+  background: #ffffff;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.25);
+  margin-top: 30px;
+}
+
+/* Kotak dalam result */
+.result-box {
+  display: flex;
+  width: 1028px;
+  flex-direction: column;
+  align-items: center;
+  gap: 17px;
+}
+
+/* Label hasil (LENGKAP) */
+.result-label {
+  color: #00B049;
+  text-align: center;
+  font-family: 'Poppins', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Deskripsi hasil */
+.result-desc {
+  color: #00B049;
+  text-align: center;
+  font-family: 'Poppins', sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  margin: 0;
+}
+
+/* Label umur */
+.stimulasi-label {
+  color: #F5C412;
+  text-align: center;
+  font-family: 'Poppins', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Grid semua stimulus */
+.stimulasi-grid {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  align-content: flex-start;
+  gap: 20px 39px;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-top: 10px;
+}
+
+/* Setiap item */
+.stimulus-item {
+  display: flex;
+  width: 160px;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.stimulus-item img {
+  width: 160px;
+  height: 160px;
+  object-fit: contain;
+}
+
+.stimulus-item p {
+  align-self: stretch;
+  width: 160px;
+  color: #242424;
+  text-align: center;
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+}
+  
+.result.normal {
+    color: #28a745;
+    font-weight: bold;
+}
+  
+.result-label.tidakLengkap {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.result-desc.abnormal {
+    color: #dc3545;
+}
+  
+  /* Age container styling */
+  .age-container {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+    background-color: #f9f9f9;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: grid;
+  }
+  
+  .age-container h2 {
+    font-size: 20px;
+    margin-bottom: 15px;
+    color: #333;
+  }
+  
+  .age-container .radio-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+  }
+  
+  .age-container .radio-group label {
+    background-color: #fff;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .age-container .radio-group label:hover {
+    background-color: #f0f8f5;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .age-container .radio-group input[type="radio"] {
+    margin-right: 10px;
+  }
+  
+  /* Back button styling */
+  #backButton {
+    margin-top: 20px;
+    display: inline-block;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 25px;
+    margin-left: 10px;
+  }
+  
+  #backButton:hover {
+    background-color: #c82333;
+  }
+  
+  /* Responsive design */
+ @media (max-width: 768px) {
+  .content {
+    width: 95%;
+    padding: 10px;
+  }
+
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  #formTitle, h1 {
+    font-size: 18px;
+    text-align: center;
+  }
+
+  label, input, th, td {
+    font-size: 14px;
+  }
+}
+
+/* ============================= */
+/* DETAIL STIMULASI (FINAL FIX) */
+/* ============================= */
+
+#detailStimulasi {
+  max-width: 900px;
+  margin: 20px auto 40px;
+  padding: 0 20px;
+}
+
+/* ================= HEADER ================= */
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 25px;
+}
+
+/* ===== BACK BUTTON (PERSEGI MELENGKUNG) ===== */
+#detailStimulasi .back-btn {
+  width: 65px;
+  height: 36px;
+  background-color: #0a763e; /* hijau */
+  border: none;
+  border-radius: 12px; /* melengkung */
+  color: #ffffff; /* panah putih */
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+#detailStimulasi .back-btn:hover {
+  background-color: #065f2f;
+}
+
+#detailStimulasi .back-btn:active {
+  transform: scale(0.95);
+}
+
+
+
+.detail-header h1 {
+  flex: 1;
+  text-align: center;
+  font-size: 20px; /* SAMA dengan halaman pertanyaan */
+  font-weight: 700;
+  font-weight: bold;
+  line-height: 1.3;        /* ⬅️ PENTING */
+  color: #0a763e;          /* sama persis header global */
+  margin: 0;
+}
+
+/* ================= IMAGE ================= */
+
+#detailImage {
+  display: block;
+  margin: 0 auto 15px;
+  width: 220px;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fffde7, #f1f8e9);
+  padding: 5px;
+}
+
+/* ================= STIMULASI TITLE ================= */
+
+#detailJudul {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #000;
+  margin-bottom: 25px;
+}
+
+/* ================= CARD ================= */
+
+.detail-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 25px 30px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Judul di DALAM card */
+.detail-card h2 {
+  text-align: center;
+  color: #4caf50;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+/* ================= STEPS ================= */
+
+#detailSteps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  counter-reset: step;
+}
+
+#detailSteps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  font-size: 16px;
+  font-weight: 600; /* LEBIH BOLD */
+  color: #000;
+  margin-bottom: 15px;
+  line-height: 1.6;
+  counter-increment: step;
+}
+
+#detailSteps li::before {
+  content: counter(step);
+  min-width: 34px;
+  height: 34px;
+  background: #4caf50;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 768px) {
+  .detail-header h1 {
+    font-size: 18px;
+  }
+
+  #detailImage {
+    width: 180px;
+    height: 180px;
+  }
+
+  #detailJudul {
+    font-size: 16px;
+  }
+
+  #detailSteps li {
+    font-size: 14px;
+  }
+}
+
+/* HEADER GLOBAL DIMATIKAN SAAT DETAIL AKTIF */
+body:has(#detailStimulasi:not(.hidden)) .header-title {
+  display: none;
+}
+
+

@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css" />
+  <title>Pantau Perkembangan Anak</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+  <main class="content">
+    <!-- STEP 0: Form Identitas -->
+     <div class="header-title">
+        <h1>Website Pantau Perkembangan Anak<br>Puskesmas Sawah Besar</h1>
+    </div>
+    <div id="step0">
+      <h1>Data Anak</h1>
+      <form id="identityForm">
+        <label>Nama Lengkap Anak: <input type="text" id="namaAnak" required></label><br/>
+        <label>Nama Lengkap Orang Tua: <input type="text" id="nama_orangtua" required></label><br/> 
+        <label>Tanggal Lahir: <input type="date" id="tanggalLahir" required></label><br/>
+        <button type="submit">Submit</button>
+        <button id="nextToQuestions" class="hidden">Lanjut</button>
+      </form>
+      <div id="identity" class="identity hidden">
+        <p id="ageRangeText"></p>
+      </div>
+    </div>
+
+    <!-- STEP 2: Form Tumbuh Kembang -->
+    <div id="step2" class="hidden">
+      <h1 id="formTitle">Pantau Perkembangan</h1>
+      <p id="usiaText"></p>
+      <form id="developmentForm">
+        <table>
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Penanda Perkembangan Anak</th>
+              <th>Ya</th>
+              <th>Tidak</th>
+            </tr>
+          </thead>
+          <tbody id="questionTable"></tbody>
+        </table>
+        <button type="button" id="backButton">Kembali</button>
+        <button type="submit">Submit</button>
+        <!-- <button type="button" id="exportButton">Export ke Excel</button> -->
+      </form>
+      <div id="result" class="result hidden"></div>
+    </div>
+  </main>
+
+   <!-- DETAIL STIMULASI -->
+  <div id="detailStimulasi" class="hidden">
+   <div class="detail-header">
+    <button class="back-btn" onclick="backToResult()">←</button>
+    <h1>Website Pantau Perkembangan Anak<br>Puskesmas Sawah Besar</h1>
+  </div>
+    <img id="detailImage">
+    <h1 id="detailJudul"></h1>
+    <div class="detail-card">
+      <h2>Cara Melakukan:</h2>
+      <ol id="detailSteps"></ol>
+  </div>
+
+</div>
+
+
+
+  <script>
+    let dataHistory = [];
+    const identityForm = document.getElementById('identityForm');
+    const developmentForm = document.getElementById('developmentForm');
+    const step0 = document.getElementById('step0');
+    const step2 = document.getElementById('step2');
+    const questionTable = document.getElementById('questionTable');
+    const formTitle = document.getElementById('formTitle');
+    const identityDiv = document.getElementById('identity');
+    const resultDiv = document.getElementById('result');
+    const backButton = document.getElementById('backButton');
+    // const exportButton = document.getElementById('exportButton');
+    const usiaText = document.getElementById('usiaText');
+    const ageRangeText = document.getElementById('ageRangeText');
+    const nextToQuestions = document.getElementById('nextToQuestions');
+
+    let lastAnswers = [];
+    let lastAgeRange = '';
+    let namaAnak = '';
+    
+
+    const calculateAgeRange = (birthDate) => {
+      const now = new Date();
+      const dob = new Date(birthDate);
+      const diffMonths = (now.getFullYear() - dob.getFullYear()) * 12 + (now.getMonth() - dob.getMonth());
+      const diffDays = Math.floor((now - dob) / (1000 * 60 * 60 * 24));
+
+      if (diffDays >= 29 && diffMonths < 3) return "29 hari - 3 bulan";
+      if (diffMonths >= 3 && diffMonths < 6) return "3 - 6 bulan";
+      if (diffMonths >= 6 && diffMonths < 9) return "6 - 9 bulan";
+      if (diffMonths >= 9 && diffMonths < 12) return "9 - 12 bulan";
+      if (diffMonths >= 12 && diffMonths < 18) return "12 - 18 bulan";
+      if (diffMonths >= 18 && diffMonths < 24) return "18 - 24 bulan";
+      if (diffMonths >= 24 && diffMonths < 36) return "2 - 3 tahun";
+      if (diffMonths >= 36 && diffMonths < 48) return "3 - 4 tahun";
+      if (diffMonths >= 48 && diffMonths < 60) return "4 - 5 tahun";
+      if (diffMonths >= 60 && diffMonths < 72) return "5 - 6 tahun";
+      return null;
+    };
+
+    function hitungUsiaLengkap(tanggalLahir) {
+  const lahir = new Date(tanggalLahir);
+  const sekarang = new Date();
+
+  let tahun = sekarang.getFullYear() - lahir.getFullYear();
+  let bulan = sekarang.getMonth() - lahir.getMonth();
+  let hari = sekarang.getDate() - lahir.getDate();
+
+  if (hari < 0) {
+    bulan -= 1;
+    hari += new Date(sekarang.getFullYear(), sekarang.getMonth(), 0).getDate();
+  }
+
+  if (bulan < 0) {
+    tahun -= 1;
+    bulan += 12;
+  }
+
+  return `${tahun} tahun ${bulan} bulan ${hari} hari`;
+}
+
+  const stimulasiByAge = {
+    "29 hari - 3 bulan": [
+      "Melatih bayi mengangkat kepala 45°",
+      "Melatih bayi berguling",
+      "Melatih bayi meraba dan memegang benda",
+      "Menirukan ocehan dan mimik bayi",
+      "Melatih bayi mengenali berbagai suara",
+      "Menirukan ocehan dan mimik bayi",
+      "Menunjukkan rasa tertarik pada bayi",
+      "Membentuk rutinitas"
+    ],
+    "3 - 6 bulan": [
+      "Latih bayi menyangga berat badan dengan mengangkat badan bayi",
+      "Gendong bayi tegak menghadap ke depan untuk melatih kontrol kepala",
+      "Gendong bayi tegak dan bantu belajar duduk dengan sandaran",
+      "Latih bayi memegang benda di masing-masing tangan",
+      "Letakkan mainan di luar jangkauan bayi dan bantu ia meraihnya",
+      "Latih bayi mengambil benda kecil dan bercermin",
+      "Ajak bayi bercermin dan gendong agar melihat lingkungan",
+      "Latih bayi untuk mengambil dan mengamati benda kecil",
+      "Tirukan suara bayi dan ajak bicara dengan ekspresi hangat.",
+      "Berikan rasa aman dan kasih sayang"
+    ],
+    "6 - 9 bulan": [
+      "Dudukkan bayi di tempat tidur, kemudian tarik ke posisi berdiri",
+      "Dudukkan bayi di tempat tidur, kemudian tarik ke posisi berdiri",
+      "Letakkan mainan di luar jangkauannya, usahakan agar bayi mau merangkak",
+      "Berikan dua mainan dan latih bayi memindahkannya ke tangan lain",
+      "Letakkan mainan di kedua tangan bayi dan contohkan cara memukulnya hingga berbunyi",
+      "Ajari bayi cara memasukkan benda kecil ke dalam wadah",
+      "Ulangi suara bayi dan ucapkan kata-kata sederhana dengan suara itu",
+      "Sembunyikan mainan dan ajari bayi menemukannya",
+      "Ajak bayi untuk bermain permainan bersosialisasi",
+      "Ajak bayi bermain sosialisasi sambil melatih mengikuti perintah sederhana."
+    ],
+    "9 - 12 bulan": [
+      "Sediakan tempat yang cukup luas dan aman untuk bayi bermain",
+      "Ajari bayi menyusun beberapa balok atau kotak besar",
+      "Latih bayi untuk duduk, merangkak, berdiri berpegangan", 
+      "Ajari bayi untuk mengambil sendiri mainan yang letaknya agak jauh",
+      "Ajak bayi menggambar dan mencoret-coret dengan krayon atau pensil",
+      "Ajarkan konsep sebab akibat (misal maju-mundur, keluar-masuk)",
+      "Ajak bayi berbicara dengan boneka mainan", 
+      "Ajak bayi berbicara dan latih agar bayi dapat menirukan kata-kata",
+      "Gali hal-hal yang membuat bayi senang dan nyaman", 
+      "Bersenandung dan nyanyikan lagu bersama sesering mungkin",
+      "Ajak bayi bermain cilukba dan petak umpet",
+      "Ajak bayi untuk berkomunikasi atau bermain dengan teman sebaya"
+    ], 
+    "12 - 18 bulan": [
+      "Ajari anak berjalan tanpa berpegangan",
+      "Latih anak untuk dapat membungkuk memungut mainan kemudian berdiri kembali", 
+      "Ajari anak cara melangkah mundur",
+      "Beritahu anak apa yang sedang Anda lakukan dan sering membacakan buku cerita setiap hari",
+      "Latih anak menyusun balok ke atas tanpa menjatuhkannya",
+      "Ajari anak cara memasukkan dan mengeluarkan benda pada wadah",
+      "Berikan respons yang tepat terhadap perilaku anak",
+      "Ajari anak cara memberi makan, meninabobokan boneka, bermain pura-pura seperti telpon-telponan",
+    ],
+    "18 - 24 bulan": [
+      "Beri ruang yang aman untuk anak berjalan dan bergerak",
+      "Berikan mainan yang dapat didorong dan ditarik dengan aman",
+      "Latih anak mengenal berbagai ukuran dan bentuk, bermain puzzle",
+      "Latih anak menemukan benda yang disembunyikan", 
+      "Latih anak untuk dapat melempar, menangkap, dan menendang bola", 
+      "Tanyakan pertanyaan sederhana dan berikan anak kesempatan untuk menjawab", 
+      "Latih anak mengerjakan perintah yang sederhana dan tunjukkan caranya", 
+      "Biarkan anak bermain mainan yang mengajarkan sebab akibat dan pemecahan"
+    ],
+    "2 - 3 tahun": [
+      "Dorong agar anak mau memanjat, berlari, melompat jauh dengan kedua kaki",
+      "Dorong agar anak mau melempar dan menangkap bola", 
+      "Ajak anak membuat proyek seni dengan menggunakan krayon, cat, dan kertas",
+      "Dorong agar anak mau bercerita apa yang dilihatnya",
+      "Ajari anak untuk mengidentifikasi dan menyebutkan bagian–bagian tubuh", 
+      "Latih anak menyebutkan nama, sifat, guna, serta keadaan suatu benda",
+      "MLatih anak berpakaian sendiri dan melakukan pekerjaan rumah tangga yang ringan",
+      "Latih anak mencuci tangan, makan dengan sendok dan garpu sendiri",
+      "Latih anak untuk melepas dan berpakaian sendiri"
+    ], 
+    "3 - 4 tahun": [
+      "Tunjukkan pada anak cara melompat dengan 1 kaki, lalu bergantian dengan kaki lainnya",
+      "Latih anak berjalan mengikuti garis lurus",
+      "Latih anak menangkap dan melempar bola sebesar bola tenis",
+      "Ajari anak menggambar garis lurus, bulatan, segi empat, menulis huruf dan angka, serta menulis nama anak",
+      "Latih anak melaksanakan instruksi yang terdiri dari 2-3 langkah",
+      "Ajak anak bermain mencampur warna",
+      "Ajak anak bercerita mengenai dirinya",
+      "Latih anak melaksanakan instruksi yang terdiri dari 2-3 langkah",
+      "Bacakan cerita setiap hari",
+      "Latih anak cara mencuci tangan dan kaki",
+      "Ajak anak pergi ke tempat dimana banyak anak-anak lain berada untuk mendorong ia bersosialisasi",
+      "Latih anak melaksanakan instruksi yang terdiri dari 2-3 langkah",
+      "Latih anak melaksanakan instruksi yang terdiri dari 2-3 langkah"
+    ],
+    "4 - 5 tahun": [
+      "Ajak anak bermain lomba bermain, lompat tali, dan mendengarkan musik sembari menari",
+      "Ajak anak bermain lomba balap karung bermain dan lompat tali",
+      "Ajak anak bermain lomba bermain, lompat tali, dan mendengarkan musik sembari menari",
+      "Latih anak untuk menggambar, menggunting, dan menempel gambar",
+      "Latih anak untuk menggambar, menggunting, dan menempel gambar",
+      "Latih anak untuk menggambar, menggunting, dan menempel gambar",
+      "Latih kemandirian anak dengan melatih memakai pakaian sendiri", 
+      "Latih anak untuk dapat melengkapi kalimat",
+      "Dorong anak sering melihat buku dan mendengarkan cerita",
+      "Luangkan waktu untuk menjawab pertanyaan 'mengapa'",
+      "Berikan anak pilihan-pilihan sederhana kapanpun Anda bisa",
+      "Latih kepercayaan diri anak pada setiap kesempatan",
+      "Kenalkan konsep besar-kecil, panjang-pendek, banyak-sedikit, berat-ringan",
+      "Kenalkan angka, konsep hitung, dan mencocokkan",
+    ],
+    "5 - 6 tahun": [
+      "Ajak anak pergi berjalan-jalan ke sekitar rumah.", 
+      "Lakukan permainan berburu, bermain halang rintang di sekitar rumah atau taman", 
+      "Dorong anak untuk menggambar dan membuat proyek seni menggunakan berbagai macam alat dan bahan",
+      "Lakukan permainan berburu, bermain halang rintang di sekitar rumah atau taman",
+      "Dorong anak untuk menggambar dan membuat proyek seni menggunakan berbagai macam alat dan bahan",
+      "Beri anak buku cerita bergambar dan dorong anak untuk menceritakan apa yang dilihat",
+      "Luangkan waktu setiap hari untuk bercakap-cakap dengan anak",
+      "Beri anak buku cerita bergambar dan dorong anak untuk menceritakan apa yang dilihat",
+      "Latih anak mengenal konsep waktu, bulan, minggu, hari",
+      "Dorong anak untuk menggambar dan membuat proyek seni",
+      "Ajak anak berbicara tentang apa yang dirasakan anak, ikutkan anak dalam acara makan sekeluarga",
+      "Latih anak mematuhi peraturan keluarga",
+      "Bantu anak mengerti urutan kegiatan dalam mengerjakan sesuatu"
+    ]
+  };
+
+  const caraMelakukanByAge = {
+  "29 hari - 3 bulan": [
+    [
+      "Letakkan bayi pada posisi tengkurap",
+      "Pastikan kedua lengan menopang tubuh sejajar bahu",
+      "Gerakkan mainan berwarna cerah di depan bayi",
+      "Dorong bayi mengangkat kepala",
+      "Secara bertahap bayi akan mengangkat kepala dan dada dengan tumpuan lengan"
+    ],
+    [
+      "Baringkan bayi pada posisi terlentang",
+      "Silangkan salah satu paha bayi ke arah berlawanan",
+      "Bantu dorong perlahan agar tubuh bayi bergerak miring",
+      "Biarkan bayi mengikuti gerakan hingga tengkurap",
+      "Lakukan sebaliknya dari tengkurap ke terlentang"
+    ],
+    [
+      "Letakkan atau sentuhkan mainan kecil berbunyi atau berwarna cerah di tangan bayi",
+      "Posisikan mainan berada dalam jangkauan bbayi",
+      "Gerakkan mainan tersebut di depan bayi",
+      "Saat gerakkan mainan, ajaklah bayi berbicara agar bayi tertarik dan berusaha meraihnya",
+      "Setelah menggenggam mainan tersebut, tarik pelan pelan untuk melatih memegang benda dengan kuat"
+    ],
+    [
+      "Hadapkan wajah Anda ke bayi",
+      "Dengarkan ocehan bayi dengan penuh perhatian",
+      "Tirukan suara atau ocehannya",
+      "Ulangi beberapa kali secara bergantian",
+      "Sertai dengan mimik wajah yang hangat dan ekspresif"
+    ],
+    [
+      "Ajak bayi dalam suasana tenang",
+      "Ajak bayi mendengarkan berbagai suara seperti suara anggota keluarga, binatang, radio, dan sebagainya",
+      "Gunakan radio atau musik lembut sesekali",
+      "Ajak bayi merespons suara dengan berbicara atau menoleh",
+      "Hindari penggunaan TV dan gawai"
+    ],
+    [
+      "Hadapkan wajah Anda ke bayi",
+      "Dengarkan ocehan bayi dengan penuh perhatian",
+      "Tirukan suara atau ocehannya",
+      "Ulangi beberapa kali secara bergantian",
+      "Sertai dengan mimik wajah yang hangat dan ekspresif"
+    ],
+    [
+      "Ajak bayi tersenyum",
+      "Mencoba untuk berbicara dengan bayi sesering mungkin",
+      "Ajak bayi mendengarkan berbagai suara",
+      "Harap untuk bayi tidak dibiasakan mendengar dan melihat TV ataupun gawai",
+      "Tirukan ocehan bayi sesering mungkin agar terjadi komunikasi dan interaksi"
+    ],
+    [
+      "Tentukan jadwal harian yang konsisten (makan, mandi, tidur)",
+      "Lakukan aktivitas pada waktu yang sama setiap hari",
+      "Gunakan urutan kegiatan yang tetap",
+      "Beri tanda rutinitas (lagu, kata, atau gerakan khusus)",
+      "Lakukan dengan suasana tenang dan penuh kehangatan"
+    ]
+  ],
+  "3 - 6 bulan": [
+  [
+        "Pegang bayi pada posisi berdiri dengan tangan menyangga ketiak",
+        "Letakkan telapak kaki bayi di permukaan datar",
+        "Biarkan bayi menopang sebagian berat badannya",
+        "Tahan posisi beberapa detik",
+        "Istirahatkan dan ulangi secara bertahap"
+    ],
+    [
+        "Gendong bayi pada posisi tegak",
+        "Pastikan leher dan punggung bayi tersangga",
+        "Biarkan bayi mengangkat dan mengontrol kepala",
+        "Lakukan saat bayi terjaga dan nyaman"
+    ],
+    [
+        "Dudukkan bayi dengan sandaran bantal atau tubuh orang tua",
+        "Pegang tubuh bayi agar tetap seimbang",
+        "Biarkan bayi mencoba menjaga posisi duduk",
+        "Lakukan dalam waktu singkat dan bertahap"
+    ],
+    [
+        "Berikan dua mainan ringan, satu di tiap tangan bayi",
+        "Bantu bayi menggenggam mainan",
+        "Biarkan bayi menggerakkan kedua tangannya",
+        "Ulangi secara rutin"
+    ],
+    [
+        "Letakkan mainan sedikit di luar jangkauan bayi",
+        "Pancing bayi untuk meraih atau bergerak dengan merangkak",
+        "Bantu bayi secara perlahan bila perlu",
+        "Beri pujian saat bayi mencoba"
+    ],
+    [
+        "Letakkan benda kecil yang aman di depan bayi",
+        "Arahkan bayi untuk mengambil benda tersebut",
+        "Ajak bayi mengamati warna atau bentuk benda"
+    ],
+    [
+        "Gendong bayi dengan posisi aman dan nyaman",
+        "Ajak bayi melihat dirinya di cermin",
+        "Arahkan bayi melihat lingkungan sekitar",
+        "Ajak bicara sambil menunjuk benda"
+    ],
+    [
+        "Letakkan benda kecil yang aman di depan bayi",
+        "Arahkan bayi untuk mengambil benda tersebut",
+        "Ajak bayi mengamati warna atau bentuk benda"
+    ],
+    [
+        "Dengarkan ocehan bayi",
+        "Tirukan suara bayi dengan nada lembut",
+        "Ajak bayi berbicara sambil tersenyum",
+        "Ulangi untuk membangun interaksi"
+    ],
+    [
+        "Peluk dan sentuh bayi dengan lembut",
+        "Ajak bicara dengan suara menenangkan",
+        "Respon kebutuhan bayi dengan cepat",
+        "Lakukan secara konsisten setiap hari"
+    ]
+  ],
+  "6 - 9 bulan": [
+    [
+        "Dudukkan bayi di tempat tidur atau alas yang aman",
+        "Pegang kedua tangan bayi dengan lembut",
+        "Tarik perlahan tubuh bayi ke posisi berdiri",
+        "Biarkan bayi menopang berat badannya sesaat",
+        "Ulangi sesuai kemampuan bayi"
+    ],
+    [
+        "Dudukkan bayi di tempat tidur atau alas yang aman",
+        "Pegang kedua tangan bayi dengan lembut",
+        "Tarik perlahan tubuh bayi ke posisi berdiri",
+        "Biarkan bayi menopang berat badannya sesaat",
+        "Ulangi sesuai kemampuan bayi"
+    ],
+    [
+        "Letakkan bayi pada posisi tengkurap",
+        "Letakkan mainan di luar jangkauan bayi",
+        "Dorong bayi untuk bergerak mengambil mainan",
+        "Bantu jika bayi terlihat kesulitan",
+        "Berikan pujian saat bayi berusaha merangkak"
+    ],
+    [
+        "Berikan dua mainan berukuran aman",
+        "Letakkan satu mainan di masing-masing tangan bayi",
+        "Ajak bayi memindahkan mainan dari satu tangan ke tangan lain",
+        "Biarkan bayi mencoba sendiri",
+        "Ulangi kegiatan secara rutin"
+    ],
+    [
+        "Letakkan mainan di kedua tangan bayi",
+        "Contohkan cara memukul kedua mainan",
+        "Biarkan bayi menirukan gerakan tersebut",
+        "Perhatikan respon bayi terhadap bunyi"
+    ],
+    [
+        "Sediakan wadah dan benda kecil yang aman",
+        "Contohkan cara memasukkan benda ke dalam wadah",
+        "Ajak bayi mencoba sendiri",
+        "Bantu jika diperlukan",
+        "Ulangi hingga bayi terbiasa"
+    ],
+    [
+        "Dengarkan suara atau ocehan bayi",
+        "Ulangi suara bayi dengan jelas",
+        "Tambahkan kata-kata sederhana",
+        "Tatap bayi dengan ekspresi hangat",
+        "Lakukan sesering mungkin"
+    ],
+    [
+        "Sembunyikan mainan favorit bayi",
+        "Perlihatkan sedikit lokasi persembunyian",
+        "Ajak bayi mencari mainan tersebut",
+        "Beri bantuan bila diperlukan",
+        "Berikan pujian saat mainan ditemukan"
+    ],
+    [
+       "Ajak bayi bermain salaman, tepuk tangan, atau melambaikan tangan",
+        "Tunjukkan gerakan secara perlahan",
+        "Biarkan bayi menirukan",
+        "Berikan respon positif",
+        "Lakukan secara berulang"
+    ],
+    [
+      "Berikan perintah sederhana sambil mencontohkan",
+        "Gunakan bahasa yang jelas dan singkat",
+        "Ajak bayi menirukan gerakan",
+        "Berikan pujian saat bayi mencoba",
+        "Ulangi dalam aktivitas sehari-hari"
+    ]
+  ],
+  "9 - 12 bulan": [
+    [
+        "Pilih area yang cukup luas untuk bayi bergerak",
+        "Pastikan lantai bersih dan tidak licin",
+        "Singkirkan benda tajam atau berbahaya",
+        "Gunakan alas bermain yang empuk",
+        "Awasi bayi selama bermain"
+    ],
+    [
+        "Sediakan balok atau kotak berukuran besar dan aman",
+        "Dudukkan bayi di posisi yang stabil",
+        "Contohkan cara menyusun balok",
+        "Biarkan bayi mencoba menyusun sendiri",
+        "Beri pujian atas setiap usaha bayi"
+    ],
+    [
+        "Latih bayi duduk tanpa bantuan secara bertahap",
+        "Ajak bayi merangkak menuju mainan",
+        "Bantu bayi berdiri dengan berpegangan",
+        "Biarkan bayi menopang berat badannya sendiri",
+    ],
+    [
+        "Letakkan mainan di jarak yang sedikit lebih jauh",
+        "Ajak bayi memperhatikan mainan tersebut",
+        "Dorong bayi untuk bergerak meraih mainan"
+    ],
+    [
+        "Sediakan krayon atau pensil yang aman untuk bayi",
+        "Berikan kertas dengan ukuran cukup besar",
+        "Contohkan cara mencoret-coret",
+        "Biarkan bayi menggambar bebas",
+        "Dampingi bayi selama aktivitas"
+    ],
+    [
+        "Sediakan mainan yang bisa digerakkan maju-mundur atau keluar-masuk",
+        "Contohkan cara memainkan mainan tersebut",
+        "Jelaskan secara sederhana apa yang terjadi",
+        "Biarkan bayi mencoba sendiri",
+        "Ulangi permainan beberapa kali"
+    ],
+    [
+        "Sediakan boneka atau mainan karakter",
+        "Ajak bayi berbicara seolah boneka hidup",
+        "Gunakan suara dan ekspresi yang menarik",
+        "Dorong bayi untuk merespons"
+    ],
+    [
+        "Ajak bayi berbicara dengan kata sederhana",
+        "Ucapkan kata dengan jelas dan perlahan",
+        "Minta bayi menirukan suara atau kata",
+        "Berikan respon positif atas usaha bayi",
+        "Ulangi dalam suasana menyenangkan"
+    ],
+    [
+        "Perhatikan reaksi bayi terhadap berbagai aktivitas",
+        "Amati mainan atau kegiatan yang disukai bayi",
+        "Ulangi aktivitas yang membuat bayi senang",
+        "Hindari aktivitas yang membuat bayi tidak nyaman",
+        "Berikan rasa aman dan kasih sayang"
+    ],
+    [
+        "Pilih lagu anak yang sederhana",
+        "Nyanyikan lagu dengan suara lembut",
+        "Ajak bayi memperhatikan irama",
+        "Ulangi lagu secara rutin"
+    ],
+    [
+        "Tutup wajah dengan tangan",
+        "Buka kembali sambil menyebutkan kata cilukba",
+        "Ajak bayi tertawa dan bereaksi",
+        "Sembunyikan mainan sederhana",
+        "Ajak bayi mencari mainan tersebut"
+    ],
+    [
+      "Perkenalkan bayi dengan teman sebayanya",
+        "Ajak bermain di lingkungan yang aman",
+        "Awasi interaksi antar bayi",
+        "Dorong bayi untuk berbagi perhatian",
+        "Berikan contoh komunikasi sederhana"
+    ]
+  ],
+  "12 - 18 bulan": [
+    [
+        "Pastikan area berjalan aman, luas dan tidak licin",
+        "Berdirikan anak pada posisi tegak",
+        "Lepaskan pegangan secara perlahan",
+        "Ajak anak berjalan ke arah Anda",
+        "Berikan pujian setiap anak mencoba"
+    ],
+    [
+        "Letakkan mainan di lantai dekat anak",
+        "Minta anak membungkuk untuk mengambil mainan",
+        "Biarkan anak berdiri kembali sambil memegang mainan",
+        "Bantu jika anak kehilangan keseimbangan",
+        "Ulangi latihan beberapa kali"
+    ],
+    [
+        "Ajak anak berdiri tegak",
+        "Contohkan cara melangkah mundur",
+        "Pegang tangan anak jika diperlukan",
+        "Minta anak mengikuti gerakan mundur"
+    ],
+    [ 
+        "Ceritakan apa yang sedang Anda lakukan",
+        "Gunakan kalimat sederhana dan jelas",
+        "Bacakan buku cerita setiap hari",
+        "Tunjuk gambar sambil menyebutkan namanya",
+        "Ajak anak merespons atau menunjuk gambar"
+    ],
+    [
+        "Sediakan balok dengan ukuran aman",
+        "Contohkan cara menyusun balok ke atas",
+        "Ajak anak mencoba menyusun sendiri",
+        "Biarkan anak memperbaiki jika balok jatuh"
+    ],
+    [
+        "Sediakan wadah dan benda",
+        "Contohkan cara memasukkan benda ke dalam wadah",
+        "Biarkan anak mencoba sendiri",
+        "Ajak anak mengeluarkan kembali benda tersebut",
+        "Ulangi aktivitas secara menyenangkan"
+    ],
+    [
+        "Perhatikan perilaku dan ekspresi anak",
+        "Berikan respon positif pada perilaku baik",
+        "Alihkan perhatian saat anak berperilaku kurang sesuai",
+        "Gunakan kata-kata lembut dan jelas"
+    ],
+    [
+       "Perhatikan perilaku dan ekspresi anak",
+        "Berikan respon positif pada perilaku baik",
+        "Alihkan perhatian saat anak berperilaku kurang sesuai",
+        "Gunakan kata-kata lembut dan jelas"
+    ]
+  ],
+  "18 - 24 bulan": [
+    [
+        "Pastikan area bebas dari benda tajam atau licin",
+        "Sediakan ruang yang cukup luas untuk bergerak",
+        "Biarkan anak berjalan dan menjelajah area tersebut",
+        "Awasi anak tanpa terlalu membatasi geraknya"
+    ],
+    [
+        "Sediakan mainan dorong atau tarik yang aman",
+        "Tunjukkan cara mendorong atau menarik mainan",
+        "Biarkan anak mencoba sendiri",
+        "Dampingi anak saat bermain",
+        "Ulangi aktivitas secara rutin"
+    ],
+    [
+        "Sediakan puzzle sederhana dengan bentuk besar",
+        "Perkenalkan nama bentuk dan ukuran",
+        "Contohkan cara memasang puzzle",
+        "Biarkan anak mencoba sendiri",
+        "Bantu jika anak mengalami kesulitan"
+    ],
+    [
+        "Tunjukkan benda yang akan disembunyikan",
+        "Sembunyikan benda di tempat yang sulit dijangkau",
+        "Ajak anak mencari benda tersebut",
+        "Berikan petunjuk sederhana jika diperlukan",
+        "Berikan pujian saat anak berhasil menemukannya"
+    ],
+    [
+        "Sediakan bola berukuran ringan dan aman",
+        "Contohkan cara melempar dan menangkap bola",
+        "Ajak anak melempar bola ke arah Anda",
+        "Latih anak menendang bola perlahan"
+    ],
+    [
+        "Ajukan pertanyaan sederhana kepada anak",
+        "Gunakan bahasa yang mudah dipahami",
+        "Berikan waktu anak untuk menjawab",
+        "Respons jawaban anak dengan positif",
+        "Ulangi percakapan dalam berbagai situasi"
+    ],
+    [
+        "Berikan perintah sederhana satu langkah",
+        "Tunjukkan contoh cara melakukannya",
+        "Minta anak menirukan perintah",
+        "Bantu anak jika diperlukan"
+    ],
+    [
+        "Sediakan mainan yang menunjukkan sebab akibat",
+        "Tunjukkan apa yang terjadi saat mainan digunakan",
+        "Biarkan anak mencoba sendiri",
+        "Ajak anak mengulangi aktivitas"
+    ]
+  ],
+  "2 - 3 tahun": [
+    [
+        "Sediakan area bermain yang aman dan luas",
+        "Contohkan cara memanjat atau melompat dengan kedua kaki",
+        "Dorong anak untuk mencoba secara bertahap",
+        "Dampingi anak saat melakukan aktivitas"
+    ],
+    [
+        "Gunakan bola yang ringan dan aman",
+        "Contohkan cara melempar dan menangkap bola",
+        "Ajak anak melempar bola ke arah Anda",
+        "Latih menangkap bola jarak dekat",
+        "Ulangi permainan secara menyenangkan"  
+    ],
+    [
+        "Sediakan krayon, cat, dan kertas",
+        "Perlihatkan cara mencoret atau menggambar sederhana",
+        "Biarkan anak berkreasi bebas",
+        "Ajak anak menceritakan hasil karyanya",
+        "Berikan apresiasi pada karya anak"
+    ],
+    [
+        "Ajak anak mengamati lingkungan sekitar",
+        "Tanyakan apa yang dilihat anak",
+        "Dengarkan cerita anak tanpa menyela",
+        "Bantu anak menyusun kalimat jika perlu",
+        "Berikan respons positif"
+    ],
+    [
+        "Sebutkan nama bagian tubuh sambil menunjuk",
+        "Minta anak menirukan penyebutan bagian tubuh",
+        "Gunakan lagu atau permainan sederhana",
+        "Ulangi kegiatan setiap hari",
+        "Berikan pujian saat anak menjawab benar"
+    ],
+    [
+        "Perlihatkan benda di sekitar anak",
+        "Sebutkan nama dan kegunaan benda",
+        "Tanyakan kembali kepada anak",
+        "Ajak anak menyentuh dan mengamati benda",
+        "Ulangi dengan berbagai benda"
+    ],
+    [
+        "Tunjukkan cara berpakaian secara sederhana",
+        "Biarkan anak mencoba sendiri",
+        "Berikan bantuan jika diperlukan",
+        "Libatkan anak dalam pekerjaan rumah ringan"
+    ],
+    [
+        "Ajari anak mencuci tangan sebelum makan",
+        "Sediakan sendok dan garpu yang aman",
+        "Latih anak makan sendiri",
+        "Awasi dan bantu jika diperlukan",
+        "Biasakan dilakukan setiap hari"
+    ],
+    [
+        "Ajari anak mencuci tangan sebelum makan",
+        "Sediakan sendok dan garpu yang aman",
+        "Latih anak makan sendiri",
+        "Awasi dan bantu jika diperlukan",
+        "Biasakan dilakukan setiap hari"
+    ]
+  ],
+  "3 - 4 tahun": [
+    [
+        "Contohkan cara melompat dengan satu kaki",
+        "Minta anak menirukan dengan kaki yang sama",
+        "Ajak anak berganti menggunakan kaki lainnya",
+        "Dampingi agar anak tetap seimbang"
+    ],
+    [
+        "Buat garis lurus di lantai menggunakan selotip atau kapur",
+        "Contohkan cara berjalan mengikuti garis",
+        "Ajak anak berjalan perlahan di atas garis",
+        "Bantu jika anak keluar jalur",
+        "Ulangi permainan beberapa kali"
+    ],
+    [ 
+        "Gunakan bola seukuran bola tenis",
+        "Contohkan cara melempar dan menangkap",
+        "Ajak anak melempar bola jarak dekat",
+        "Latih menangkap dengan kedua tangan",
+        "Tingkatkan jarak secara bertahap"
+    ],
+    [
+        "Sediakan kertas dan alat tulis",
+        "Ajari menggambar garis lurus dan bulatan",
+        "Lanjutkan dengan segi empat",
+        "Latih menulis huruf dan angka",
+        "Bimbing anak menulis namanya sendiri"
+    ],
+    [
+        "Berikan instruksi sederhana bertahap",
+        "Gunakan bahasa yang jelas dan singkat",
+        "Minta anak mengulangi instruksi",
+        "Biarkan anak melaksanakan sendiri",
+        "Berikan pujian jika berhasil"
+    ],
+    [
+        "Sediakan cat atau krayon warna dasar",
+        "Contohkan mencampur dua warna",
+        "Ajak anak menebak warna hasil campuran",
+        "Biarkan anak mencoba sendiri",
+        "Apresiasi hasil karya anak"
+    ],
+    [
+        "Ajak anak duduk dengan nyaman",
+        "Tanyakan tentang nama dan kegiatannya",
+        "Dorong anak bercerita dengan bebas",
+        "Dengarkan tanpa menyela",
+        "Berikan respons positif"
+    ],
+    [
+      "Berikan instruksi sederhana bertahap",
+        "Gunakan bahasa yang jelas dan singkat",
+        "Minta anak mengulangi instruksi",
+        "Biarkan anak melaksanakan sendiri",
+        "Berikan pujian jika berhasil"
+    ],
+    [
+        "Pilih buku cerita sesuai usia anak",
+        "Bacakan dengan intonasi menarik",
+        "Tunjukkan gambar saat bercerita",
+        "Ajak anak bertanya atau menjawab",
+        "Lakukan secara rutin setiap hari"
+    ],
+    [
+       "Contohkan cara mencuci tangan dan kaki",
+        "Ajari urutan mencuci dengan benar",
+        "Biarkan anak mempraktikkan sendiri",
+        "Awasi dan bantu jika perlu",
+        "Biasakan dilakukan setiap hari"
+    ],
+    [
+        "Ajak anak ke tempat bermain bersama",
+        "Perkenalkan anak pada teman sebaya",
+        "Biarkan anak bermain secara bebas",
+        "Awasi tanpa terlalu mengatur",
+        "Berikan dukungan dan dorongan positif"
+    ],
+    [
+        "Berikan instruksi sederhana bertahap",
+        "Gunakan bahasa yang jelas dan singkat",
+        "Minta anak mengulangi instruksi",
+        "Biarkan anak melaksanakan sendiri",
+        "Berikan pujian jika berhasil"
+    ],
+    [
+        "Berikan instruksi sederhana bertahap",
+        "Gunakan bahasa yang jelas dan singkat",
+        "Minta anak mengulangi instruksi",
+        "Biarkan anak melaksanakan sendiri",
+        "Berikan pujian jika berhasil"
+    ]
+  ],
+  "4 - 5 tahun": [
+    [
+        "Ajak anak bermain lomba sederhana seperti balap atau permainan kelompok",
+        "Latih anak melompat tali sesuai kemampuan",
+        "Putar musik dengan irama ceria",
+        "Ajak anak bergerak dan menari mengikuti musik",
+        "Berikan pujian agar anak semakin percaya diri"
+    ],
+    [
+        "Sediakan kertas, krayon, gunting aman, dan lem",
+        "Ajak anak menggambar bebas sesuai imajinasinya",
+        "Latih anak menggunting gambar sederhana",
+        "Bantu anak menempelkan hasil guntingan"
+    ],
+    [
+        "Ajak anak bermain lomba sederhana seperti balap atau permainan kelompok",
+        "Latih anak melompat tali sesuai kemampuan",
+        "Putar musik dengan irama ceria",
+        "Ajak anak bergerak dan menari mengikuti musik",
+        "Berikan pujian agar anak semakin percaya diri"
+    ],
+    [
+        "Sediakan kertas, krayon atau pensil warna, gunting aman, dan lem",
+        "Ajak anak menggambar bentuk atau objek sederhana",
+        "Latih anak menggunting gambar sesuai garis",
+        "Bantu anak mengoleskan lem pada hasil guntingan",
+        "Ajak anak menempelkan gambar pada kertas lain"
+    ],
+    [
+        "Sediakan kertas, krayon atau pensil warna, gunting aman, dan lem",
+        "Ajak anak menggambar bentuk atau objek sederhana",
+        "Latih anak menggunting gambar sesuai garis",
+        "Bantu anak mengoleskan lem pada hasil guntingan",
+        "Ajak anak menempelkan gambar pada kertas lain"
+    ],
+    [
+        "Sediakan kertas, krayon atau pensil warna, gunting aman, dan lem",
+        "Ajak anak menggambar bentuk atau objek sederhana",
+        "Latih anak menggunting gambar sesuai garis",
+        "Bantu anak mengoleskan lem pada hasil guntingan",
+        "Ajak anak menempelkan gambar pada kertas lain"
+    ],
+    [
+        "Pilih pakaian yang mudah dikenakan",
+        "Contohkan cara memakai pakaian",
+        "Biarkan anak mencoba sendiri",
+        "Bantu hanya jika anak kesulitan",
+        "Berikan pujian atas usaha anak"
+    ],
+    [
+        "Ucapkan kalimat sederhana dan berhenti di tengah",
+        "Minta anak melanjutkan kalimat",
+        "Gunakan kata-kata yang familiar",
+        "Ulangi dan perbaiki dengan lembut bila perlu",
+        "Lakukan secara rutin dalam percakapan sehari-hari"
+    ],
+    [
+        "Sediakan buku bergambar yang menarik",
+        "Ajak anak melihat dan membuka buku",
+        "Bacakan cerita dengan suara ekspresif",
+        "Ajak anak bertanya atau menunjuk gambar",
+        "Lakukan kegiatan ini setiap hari"
+    ],
+    [ 
+        "Dengarkan pertanyaan anak dengan penuh perhatian",
+        "Jawab menggunakan bahasa sederhana",
+        "Gunakan contoh nyata di sekitar anak",
+        "Ajak anak berdiskusi ringan",
+        "Dorong rasa ingin tahu anak"
+    ],
+    [
+        "Berikan dua pilihan yang aman bagi anak",
+        "Minta anak memilih salah satu",
+        "Hargai pilihan anak",
+        "Gunakan dalam aktivitas sehari-hari",
+        "Latih anak mengambil keputusan sederhana"
+    ],
+    [
+        "Berikan kesempatan anak mencoba hal baru",
+        "Dukung dan dampingi tanpa memaksa",
+        "Berikan pujian atas usaha anak",
+        "Hindari membandingkan dengan anak lain",
+        "Bangun rasa percaya diri secara konsisten"
+    ],
+    [
+        "Gunakan benda sehari-hari sebagai contoh",
+        "Perkenalkan konsep besar-kecil dan panjang-pendek",
+        "Bandingkan jumlah benda untuk banyak-sedikit",
+        "Ajak anak mengangkat benda untuk mengenal berat-ringan",
+        "Ulangi dalam kegiatan sehari-hari"
+    ],
+    [
+        "Perkenalkan angka secara bertahap",
+        "Ajak anak menghitung benda di sekitarnya",
+        "Latih mencocokkan jumlah dengan angka",
+        "Gunakan permainan agar lebih menyenangkan",
+        "Lakukan secara rutin dan santai"
+    ]
+  ],
+  "5 - 6 tahun": [
+    [
+        "Ajak anak berjalan-jalan di sekitar rumah atau lingkungan terdekat",
+        "Tunjukkan benda-benda yang ditemui di jalan",
+        "Ajak anak mengamati dan menyebutkan apa yang dilihat",
+        "Biarkan anak bergerak dengan aman dan bebas",
+        "Berikan pujian atas keaktifan anak"
+    ],
+    [
+        "Sediakan area aman di rumah atau taman",
+        "Susun rintangan sederhana menggunakan benda di sekitar",
+        "Ajak anak mencari benda tertentu (permainan berburu)",
+        "Dampingi anak melewati rintangan",
+        "Sesuaikan tingkat kesulitan dengan kemampuan anak"
+    ],
+    [
+       "Sediakan berbagai alat dan bahan seni",
+        "Ajak anak memilih alat yang ingin digunakan",
+        "Biarkan anak menggambar atau membuat karya bebas",
+        "Dampingi tanpa terlalu mengatur hasilnya"
+    ],
+    [
+        "Sediakan area aman di rumah atau taman",
+        "Susun rintangan sederhana menggunakan benda di sekitar",
+        "Ajak anak mencari benda tertentu (permainan berburu)",
+        "Dampingi anak melewati rintangan",
+        "Sesuaikan tingkat kesulitan dengan kemampuan anak"
+    ],
+    [
+        "Sediakan berbagai alat dan bahan seni",
+        "Ajak anak memilih alat yang ingin digunakan",
+        "Biarkan anak menggambar atau membuat karya bebas",
+        "Dampingi tanpa terlalu mengatur hasilnya"
+    ],
+    [
+        "Berikan buku cerita bergambar yang menarik",
+        "Ajak anak melihat gambar satu per satu",
+        "Minta anak menceritakan apa yang dilihat",
+        "Bantu dengan pertanyaan sederhana",
+        "Dengarkan cerita anak dengan penuh perhatian"
+    ],
+    [ 
+        "Luangkan waktu khusus setiap hari untuk berbicara",
+        "Tanyakan aktivitas atau perasaan anak",
+        "Dengarkan jawaban anak tanpa menyela",
+        "Tanggapi dengan bahasa yang positif",
+        "Gunakan momen ini untuk membangun kedekatan"
+    ],
+    [
+        "Berikan buku cerita bergambar yang menarik",
+        "Ajak anak melihat gambar satu per satu",
+        "Minta anak menceritakan apa yang dilihat",
+        "Bantu dengan pertanyaan sederhana",
+        "Dengarkan cerita anak dengan penuh perhatian"
+    ],
+    [
+        "Perkenalkan nama hari, minggu, dan bulan",
+        "Gunakan kegiatan sehari-hari sebagai contoh",
+        "Ulangi penyebutan waktu secara konsisten",
+        "Ajak anak menyebutkan urutan waktu",
+        "Gunakan kalender atau gambar pendukung"
+    ],
+    [
+        "Sediakan berbagai alat dan bahan seni",
+        "Ajak anak memilih alat yang ingin digunakan",
+        "Biarkan anak menggambar atau membuat karya bebas",
+        "Dampingi tanpa terlalu mengatur hasilnya"
+    ],
+    [
+        "Ajak anak berbicara tentang perasaannya",
+        "Dengarkan tanpa menghakimi",
+        "Libatkan anak dalam acara makan bersama keluarga",
+        "Ajak anak berbicara saat makan",
+        "Berikan contoh komunikasi yang baik"
+    ],
+    [
+        "Jelaskan peraturan keluarga dengan bahasa sederhana",
+        "Berikan contoh perilaku yang sesuai",
+        "Ingatkan anak dengan lembut saat melanggar",
+        "Beri pujian saat anak mematuhi aturan",
+        "Lakukan secara konsisten"
+    ],
+    [
+        "Jelaskan urutan kegiatan sebelum memulai",
+        "Lakukan kegiatan bersama anak",
+        "Ingatkan urutan langkah satu per satu",
+        "Biarkan anak mencoba sendiri",
+        "Evaluasi bersama setelah selesai"
+    ]
+  ],
+};
+
+
+  function convertAgeRangeToFolder(ageRange) {
+  // return ageRange
+  //   .replace("hari", "")       // hapus "hari" jika ada
+  //   .replace(/\s+/g, '')       // hapus semua spasi
+  //   .replace('–', '-')         // ubah en-dash jadi dash biasa
+  //   .replace('--', '-')        // kalau jadi dua dash, kembalikan satu
+  //   .toLowerCase();            // opsional: buat lowercase
+  const map = {
+    "29 hari - 3 bulan": "29-3 Bulan",
+    "3 - 6 bulan": "3-6 Bulan",
+    "6 - 9 bulan": "6-9 Bulan",
+    "9 - 12 bulan": "9-12 Bulan",
+    "12 - 18 bulan": "12-18 Bulan",
+    "18 - 24 bulan": "18-24 Bulan",
+    "2 - 3 tahun": "2-3 Tahun",
+    "3 - 4 tahun": "3-4 Tahun",
+    "4 - 5 tahun": "4-5 Tahun",
+    "5 - 6 tahun": "5-6 Tahun"
+  };
+
+  return map[ageRange] || "";
+
+}
+
+function generateStimulasiHTML(ageRange, tidakIndexes) {
+  const stimulasiList = stimulasiByAge[ageRange] || [];
+  const folderName = convertAgeRangeToFolder(ageRange);
+
+  if (tidakIndexes.length === 0) return ``;
+
+  return `
+    <h3 class="stimulasi-label">
+      STIMULASI SESUAI ASPEK YANG PERLU DILATIH
+    </h3>
+    <div class="stimulasi-grid">
+      ${tidakIndexes.map(index => `
+        <div class="stimulus-item"
+             onclick="showDetailStimulasi('${ageRange}', ${index})"
+             style="cursor:pointer">
+          <img src="stim/${folderName}/img ${index + 1}.png">
+          <p>${stimulasiList[index]}</p>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+
+    identityForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const tanggalLahir = document.getElementById('tanggalLahir').value;
+      namaAnak = document.getElementById('namaAnak').value;
+      
+      nextToQuestions.classList.remove('hidden');
+
+      const ageRange = calculateAgeRange(tanggalLahir);
+      if (!ageRange) {
+        alert("Form hanya tersedia untuk usia 29 hari sampai 6 tahun.");
+        return;
+      }
+
+      lastAgeRange = ageRange;
+      ageRangeText.textContent = `Usia anak termasuk dalam rentang: ${ageRange}`;
+      identityDiv.classList.remove('hidden');
+    });
+
+    nextToQuestions.addEventListener('click', () => {
+      const questions = questionsByAge[lastAgeRange];
+      if (!questions) {
+        alert("Pertanyaan untuk usia ini belum tersedia.");
+        return;
+      }
+
+      formTitle.textContent = `Pantau Perkembangan Anak Usia ${lastAgeRange}`;
+
+      questionTable.innerHTML = '';
+      questions.forEach((question, index) => {
+        questionTable.innerHTML += `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${question}</td>
+            <td><input type="radio" name="q${index + 1}" value="ya" required></td>
+            <td><input type="radio" name="q${index + 1}" value="tidak"></td>
+          </tr>
+        `;
+      });
+
+      step0.classList.add('hidden');
+      step2.classList.remove('hidden');
+    });
+
+    developmentForm.addEventListener('submit', (e) => {
+      
+      e.preventDefault();
+      const answers = Array.from(developmentForm.querySelectorAll('input[type="radio"]:checked'));
+      const tidakIndexes = [];
+  const rows = questionTable.querySelectorAll('tr');
+  rows.forEach((row, index) => {
+    const tidakRadio = row.querySelector(
+      'input[type="radio"][value="tidak"]'
+    );
+    if (tidakRadio && tidakRadio.checked) {
+      tidakIndexes.push(index);
+    }
+  });
+
+      const allYes = tidakIndexes.length === 0;
+
+      const totalQuestions = questionTable.querySelectorAll('tr').length;
+      if (answers.length !== totalQuestions) {
+        alert("Mohon jawab semua pertanyaan terlebih dahulu.");
+        return;
+      }
+
+      // HITUNG EVALUASI BERDASARKAN USIA
+      const tgl = document.getElementById('tanggalLahir').value;
+      const dob = new Date(tgl);
+      const now = new Date();
+      const diffMonths = (now.getFullYear() - dob.getFullYear()) * 12 + (now.getMonth() - dob.getMonth());
+      const interval = diffMonths < 24 ? "3 bulan" : "6 bulan";
+
+      lastAnswers = answers.map((answer) => {
+        const row = answer.closest('tr');
+        return {
+          Pertanyaan: row.children[1].textContent,
+          Jawaban: answer.value
+        };
+      });
+
+      resultDiv.classList.remove('hidden');
+      if (allYes) {
+        // resultDiv.textContent = 'LENGKAP: Berdasarkan data tumbuh kembang anak, diketahui bahwa anak mengalami proses perkembangan yang lengkap. Disarankan untuk melakukan kunjungan selanjutnya pada ${interval} berikutnya.';
+        resultDiv.className = 'result lengkap';
+        resultDiv.innerHTML = `
+        <div class="result-box">
+          <h2 class="result-label">LENGKAP</h2>
+          <p class="result-desc">
+            Berdasarkan data perkembangan anak, diketahui bahwa anak mengalami proses perkembangan yang lengkap. 
+            Disarankan untuk melakukan kunjungan selanjutnya pada ${interval} berikutnya.
+          </p>
+          ${generateStimulasiHTML(lastAgeRange, tidakIndexes)}
+        </div>
+`;
+      } else {
+        resultDiv.className = 'result tidak lengkap';
+        resultDiv.innerHTML = `
+        <div class="result-box">
+          <h2 class="result-label tidakLengkap"> TIDAK LENGKAP</h2>
+          <p class="result-desc tidakLengkap">
+            Berdasarkan data perkembangan anak, terdapat tanda-tanda yang tidak lengkap. 
+            Disarankan untuk berkonsultasi dengan tenaga kesehatan.
+          </p>
+          ${generateStimulasiHTML(lastAgeRange, tidakIndexes)}
+        </div>
+      `;
+      }
+
+      const tanggalLahir = document.getElementById('tanggalLahir').value;
+      const namaAnak = document.getElementById('namaAnak').value;
+      const nama_orangtua = document.getElementById('nama_orangtua').value;
+
+      const penjelasan = allYes
+      ? 'LENGKAP: Berdasarkan data perkembangan anak, diketahui bahwa anak mengalami proses perkembangan yang lengkap. Disarankan untuk melakukan kunjungan selanjutnya pada 2 bulan berikutnya.'
+      : 'TIDAK LENGKAP: Berdasarkan data perkembangan anak, terdapat tanda-tanda yang tidak lengkap. Disarankan untuk berkonsultasi dengan tenaga kesehatan.';
+    
+dataHistory.push({
+      namaAnak,
+      nama_orangtua,
+      tanggalLahir,
+      usiaAnak: hitungUsiaLengkap(tanggalLahir),
+      rentangUsia: lastAgeRange,
+      status: allYes ? 'LENGKAP' : 'TIDAK LENGKAP',
+      penjelasan,
+      jawaban: lastAnswers
+    });
+    
+  fetch('saveData.php', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    namaAnak,
+    nama_orangtua,
+    tanggalLahir,
+    usiaAnak: hitungUsiaLengkap(tanggalLahir),
+    rentangUsia: lastAgeRange,
+    status: allYes ? 'LENGKAP' : 'TIDAK LENGKAP',
+    penjelasan
+  })
+})
+.then(res => res.json())
+.then(data => {
+  if (data.status === 'success') {
+    console.log('Data berhasil disimpan.');
+  } else {
+    console.error('Gagal `:', data.message);
+  }
+})
+.catch(err => console.error('Error:', err));
+
+    });
+
+    backButton.addEventListener('click', () => {
+      // step2.classList.add('hidden');
+      // step0.classList.remove('hidden');
+      // resultDiv.classList.add('hidden');
+
+      // // Reset semua data dan form
+      // developmentForm.reset();
+      // identityForm.reset();
+      // questionTable.innerHTML = '';
+      // usiaText.textContent = '';
+      // ageRangeText.textContent = '';
+      // identityDiv.classList.add('hidden');
+      // nextToQuestions.classList.add('hidden'); 
+
+      // Tampilkan kembali form identitas
+      step2.classList.add('hidden');
+      step0.classList.remove('hidden');
+
+      // Reset semua isian
+      identityForm.reset();
+      developmentForm.reset();
+
+      // Kosongkan tabel pertanyaan
+      questionTable.innerHTML = '';
+
+      // Kosongkan dan sembunyikan hasil
+      resultDiv.innerHTML = '';
+      resultDiv.classList.add('hidden');
+
+      // Kosongkan teks rentang usia dan usia
+      ageRangeText.textContent = '';
+      usiaText.textContent = '';
+
+      // Sembunyikan div identitas dan tombol lanjut
+      identityDiv.classList.add('hidden');
+      nextToQuestions.classList.add('hidden');
+    });
+
+    //exportButton.addEventListener('click', () => {
+  //     if (dataHistory.length === 0) {
+  //   alert('Belum ada data yang bisa diexport!');
+  //   return;
+  // }
+
+  // Dapatkan semua pertanyaan unik
+  const allQuestionsSet = new Set();
+  dataHistory.forEach(data => {
+    data.jawaban.forEach(item => allQuestionsSet.add(item.Pertanyaan));
+  });
+  const allQuestions = Array.from(allQuestionsSet);
+
+  const headers = [
+    "Nama Lengkap Anak",
+    "Nama Lengkap Orang Tua",
+    "Tanggal Lahir",
+    "Usia Anak",
+    "Rentang Usia",
+    "Status Perkembangan",
+    "Penjelasan",
+    ...allQuestions
+  ];
+
+  const rows = dataHistory.map(data => {
+    const row = [
+      data.namaAnak,
+      data.nama_orangtua,
+      data.tanggalLahir,
+      data.usiaAnak,
+      data.rentangUsia,
+      data.status,
+      data.penjelasan
+    ];
+
+    // Map jawaban sesuai urutan allQuestions
+    const jawabanMap = {};
+    data.jawaban.forEach(j => {
+      jawabanMap[j.Pertanyaan] = j.Jawaban;
+    });
+
+    const jawabanRow = allQuestions.map(q => jawabanMap[q] || '');
+    return [...row, ...jawabanRow];
+  });
+
+  // const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  // const workbook = XLSX.utils.book_new();
+  // XLSX.utils.book_append_sheet(workbook, worksheet, 'Data Semua Anak');
+
+  // XLSX.writeFile(workbook, `Riwayat_Tumbuh_Kembang.xlsx`);
+
+    // Data pertanyaan (same as sebelumnya)
+    const questionsByAge = { 
+      "29 hari - 3 bulan": [
+        "Bayi bisa mengangkat kepala mandiri hingga setinggi 45 derajat?",
+        "Bayi bisa menggerakkan kepala dari kiri/kanan ke tengah?",
+        "Bayi bisa melihat dan menatap wajah anda?",
+        "Bayi bisa mengoceh spontan atau bereaksi dengan mengoceh?",
+        "Bayi suka tertawa keras?",
+        "Bayi bereaksi terkejut terhadap suara keras?",
+        "Bayi membalas tersenyum ketika diajak bicara/tersenyum?",
+        "Bayi mengenal ibu dengan penglihatan, penciuman, pendengaran, kontak?",
+      ],
+      "3 - 6 bulan": [
+        "Bayi bisa berbalik dari telungkup ke telentang?",
+        "Bayi bisa mengangkat kepala secara mandiri hingga tegak 90 derajat?",
+        "Bayi bisa mempertahankan posisi kepala tetap tegak dan stabil?",
+        "Bayi bisa menggenggam mainan kecil atau mainan bertangkai?",
+        "Bayi bisa meraih benda yang ada dalam jangkauannya?",
+        "Bayi bisa mengamati tangannya sendiri?",
+        "Bayi bisa memperluas pandangan?",
+        "Bayi mengarahkan matanya pada benda-benda kecil?",
+        "Bayi mengeluarkan suara gembira bernada tinggi atau memekik",
+        "Bayi tersenyum ketika melihat mainan/gambar yang menarik saat bermain sendiri",
+      ],
+      "6 - 9 bulan": [
+        "Bayi bisa duduk secara mandiri?",
+        "Bayi belajar berdiri, kedua kakinya menyangga sebagian berat badan?",
+        "Bayi bisa merangkak meraih mainan atau mendekati seseorang?",
+        "Bayi bisa memindahkan benda dari satu tangan ke tangan lainnya?",
+        "Bayi bisa memungut 2 benda, kedua tangan pegang 2 benda pada saat bersamaan?",
+        "Bayi bisa memungut benda sebesar kacang dengan cara meraup?",
+        "Bayi bersuara tanpa arti, mamama, bababa, dadada, tatatata?",
+        "Bayi mencari mainan/benda yang dijatuhkan?",
+        "Bayi bermain tepuk tangan/Cilukba",
+        "Bayi bergembira dengan melempar benda?"
+      ],
+      "9 - 12 bulan": [
+        "Bayi bisa mengangkat badannya ke posisi berdiri?",
+        "Bayi belajar berdiri selama 30 detik atau berpegangan di kursi?",
+        "Bayi dapat berjalan dengan dituntun?",
+        "Bayi mengulurkan lengan/badan untuk meraih mainan yang diinginkan?",
+        "Bayi bisa menggenggam erat pensil?",
+        "Bayi memasukkan benda ke mulut?",
+        "Bayi mengulang menirukan bunyi yang didengar?",
+        "Bayi menyebut 2-3 suku kata yang sama tanpa arti?",
+        "Bayi mengeksplorasi sekitar, ingin tahu, ingin menyentuh apa saja?",
+        "Bayi bereaksi terhadap suara yang perlahan atau bisikan?",
+        "Bayi senang diajak bermain Cilukba?",
+        "Bayi mengenal anggota keluarga, takut pada orang yang belum dikenal?"
+      ],
+      "12 - 18 bulan": [
+        "Anak bisa berdiri sendiri tanpa berpegangan?",
+        "Anak bisa membungkuk memungut mainan kemudian berdiri kembali?",
+        "Anak bisa berjalan mundur lima langkah?",
+        "Anak bisa memanggil ayah dengan kata papa, memanggil ibu dengan kata mama?",
+        "Anak bisa menumpuk dua kubus?",
+        "Anak bisa memasukkan kubus di kotak?",
+        "Anak bisa menunjuk apa yang diinginkan tanpa menangis/merengek, anak bisa mengeluarkan suara yang menyenangkan atau menarik tangan ibu?",
+        "Anak bisa memperlihatkan rasa cemburu/bersaing?"
+      ],
+      "18 - 24 bulan": [
+        "Anak bisa berdiri sendiri tanpa berpegangan 30 detik?",
+        "Anak bisa berjalan tanpa terhuyung-huyung?",
+        "Anak bisa menumpuk 4 buah kubus?",
+        "Anak bisa memungut benda kecil dengan ibu jari dan jari telunjuk?",
+        "Anak bisa menggelindingkan bola ke arah sasaran?",
+        "Anak bisa menyebut 3 - 6 kata yang mempunyai arti?",
+        "Anak bisa membantu/menirukan pekerjaan rumah tangga?",
+        "Anak bisa memegang cangkir sendiri, belajar makan-minum sendiri?"
+      ],
+      "2 - 3 tahun": [
+        "Anak bisa jalan naik tangga sendiri?", 
+        "Anak bisa bermain dan menendang bola kecil?",
+        "Anak bisa mencoret-coret pensil pada kertas?",
+        "Anak bisa bicara dengan baik, menggunakan 2 kata?",
+        "Anak bisa menunjuk 1 atau lebih bagian tubuhnya ketika diminta?",
+        "Anak bisa melihat gambar dan dapat menyebut dengan benar nama 2 benda atau lebih?",
+        "Anak bisa membantu memungut mainannya sendiri atau membantu mengangkat piring jika diminta?",
+        "Anak bisa makan nasi sendiri tanpa banyak tumpah?",
+        "Anak bisa melepas pakaiannya sendiri?"
+      ],
+      "3 - 4 tahun": [
+        "Anak bisa berdiri 1 kaki 2 detik?",
+        "Anak bisa melompat kedua kaki diangkat?",
+        "Anak bisa mengayuh sepeda roda tiga?", 
+        "Anak bisa menggambar garis lurus?", 
+        "Anak bisa menumpuk 8 buah kubus?", 
+        "Anak bisa mengenal 2-4 warna?", 
+        "Anak bisa menyebut nama, umur, tempat?", 
+        "Anak bisa mengerti arti kata di atas, di bawah, di depan?", 
+        "Anak bisa mendengarkan cerita?", 
+        "Anak bisa mencuci dan mengeringkan tangan sendiri?", 
+        "Anak bermain bersama teman, mengikuti aturan permainan?", 
+        "Anak bisa mengenakan sepatu sendiri?", 
+        "Anak bisa mengenakan celana panjang, kemeja, baju?"
+      ],
+      "4 - 5 tahun": [
+        "Anak bisa berdiri 1 kaki 6 detik", 
+        "Anak bisa melompat-lompat 1 kaki", 
+        "Anak bisa menari", 
+        "Anak bisa menggambar tanda silang", 
+        "Anak bisa menggambar lingkaran", 
+        "Anak bisa menggambar orang dengan 3 bagian tubuh", 
+        "Anak bisa mengancing baju atau pakaian boneka", 
+        "Anak bisa menyebut nama lengkap tanpa dibantu", 
+        "Anak bisa senang menyebut kata-kata baru", 
+        "Anak bisa senang bertanya tentang sesuatu", 
+        "Anak bisa menjawab pertanyaan dengan kata-kata yang benar", 
+        "Anak bisa bicara yang mudah dimengerti", 
+        "Anak bisa membandingkan/membedakan sesuatu dari ukuran dan bentuknya", 
+        "Anak bisa menyebut angka, menghitung jari"
+      ],
+      "5 - 6 tahun": [
+        "Anak bisa berjalan lurus?",
+        "Anak bisa berdiri dengan 1 kaki selama 11 detik?",
+        "Anak bisa menggambar dengan 6 bagian, menggambar orang lengkap?",
+        "Anak bisa menangkap bola kecil dengan kedua tangan?",
+        "Anak bisa menggambar segi empat?",
+        "Anak bisa mengerti arti lawan kata?",
+        "Anak bisa mengerti pembicaraan yang menggunakan 7 kata atau lebih?",
+        "Anak bisa menjawab pertanyaan tentang benda terbuat dari apa dan kegunaannya?",
+        "Anak bisa mengenal angka, bisa menghitung angka 5-10?",
+        "Anak bisa mengenal warna-warni?",
+        "Anak bisa mengungkapkan simpati?",
+        "Anak bisa mengikuti aturan permainan?",
+        "Anak bisa berpakaian sendiri tanpa dibantu?"
+      ]
+    };
+  
+    function showDetailStimulasi(ageRange, index) {
+  // sembunyikan hasil
+  document.getElementById('step2').classList.add('hidden');
+
+  resultDiv.classList.add('hidden');
+
+  // tampilkan detail
+  document.getElementById('detailStimulasi').classList.remove('hidden');
+
+  // set judul
+  document.getElementById('detailJudul').textContent =
+    stimulasiByAge[ageRange][index];
+
+  // set gambar
+  const folder = convertAgeRangeToFolder(ageRange);
+  document.getElementById('detailImage').src =
+    `stim/${folder}/img ${index + 1}.png`;
+
+  // set langkah
+  const list = document.getElementById('detailSteps');
+  list.innerHTML = '';
+  caraMelakukanByAge[ageRange][index].forEach(step => {
+    const li = document.createElement('li');
+    li.textContent = step;
+    list.appendChild(li);
+  });
+}
+
+function backToResult() {
+  document.getElementById('detailStimulasi').classList.add('hidden');
+  document.getElementById('step2').classList.remove('hidden');
+  resultDiv.classList.remove('hidden');
+}
+
+
+  </script>
+
+</body>
+</html>
